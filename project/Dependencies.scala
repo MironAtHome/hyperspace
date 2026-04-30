@@ -29,6 +29,12 @@ object Dependencies {
       "org.apache.spark" %% "spark-catalyst" % sv % "test" classifier "tests",
       "org.apache.spark" %% "spark-core" % sv % "test" classifier "tests",
       "org.apache.spark" %% "spark-sql" % sv % "test" classifier "tests") ++
+      (if (sparkVersion == Version(3, 5, 1))
+        Seq("io.delta" %% "delta-spark" % "3.3.2" % "provided" withSources ())
+      else if (sparkVersion >= Version(3, 0, 1) && sparkVersion < Version(3, 5, 1))
+        Seq("io.delta" %% "delta-core" % "0.8.0" % "provided" withSources ())
+      else
+        Seq("io.delta" %% "delta-core" % "0.6.1" % "provided" withSources ())) ++
       (if (sparkVersion < Version(3, 1, 0))
          Seq("org.scalatest" %% "scalatest" % "3.0.8" % "test")
        else
@@ -37,11 +43,9 @@ object Dependencies {
            "org.scalatestplus" %% "scalatestplus-scalacheck" % "3.1.0.0-RC2" % "test")) ++
       (if (sparkVersion < Version(3, 0, 0))
          Seq(
-           "io.delta" %% "delta-core" % "0.6.1" % "provided" withSources (),
            "org.apache.iceberg" % "iceberg-spark-runtime" % "0.11.0" % "provided" withSources ())
-       else
+        else
          Seq(
-           "io.delta" %% "delta-core" % "0.8.0" % "provided" withSources (),
            "org.apache.iceberg" % "iceberg-spark3-runtime" % "0.11.1" % "provided" withSources (),
            "org.apache.hive" % "hive-metastore" % "2.3.8" % "test"))
   }

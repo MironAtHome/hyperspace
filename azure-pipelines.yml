@@ -50,6 +50,17 @@ jobs:
           sparkVersion: "3.1"
           scalaVersion: "2.12.8"
 
+  - job: Build_Spark3_5_2_12
+    displayName: 'Build sources and run unit tests for Spark 3.5 / Scala 2.12'
+    pool:
+      vmImage: 'ubuntu-24.04'
+    steps:
+      - template: 'ci/linux_test.yml'
+        parameters:
+          sparkVersionUnderBar: "3_5"
+          sparkVersion: "3.5"
+          scalaVersion: "2.12.18"
+
   - job: Build_Spark2_4_2_11_WIN
     displayName: 'Build sources and run unit tests for Spark 2.4 / Scala 2.11 on Windows'
     pool:
