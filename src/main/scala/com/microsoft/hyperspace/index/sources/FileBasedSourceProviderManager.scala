@@ -54,7 +54,13 @@ class FileBasedSourceProviderManager(spark: SparkSession) {
    * @return True if the given plan is a supported relation.
    */
   def isSupportedRelation(plan: LogicalPlan): Boolean = {
-    runWithDefault(p => p.isSupportedRelation(plan))(false)
+    val isSupported: Boolean = runWithDefault(p => p.isSupportedRelation(plan))(false)
+  // scalastyle:off println
+    println("#debug3 FileBasedSourceProviderManager.isSupportedRelation validating plan: "
+    + plan.getClass.getName
+    + s" result = ${isSupported}")
+  // scalastyle:on println
+    isSupported
   }
 
   /**

@@ -18,10 +18,8 @@ package com.microsoft.hyperspace.index.sources.delta
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import org.apache.spark.sql.delta.files.TahoeLogFileIndex
-import org.apache.spark.sql.execution.datasources.{HadoopFsRelation, LogicalRelation}
 
-import com.microsoft.hyperspace.index.{IndexConstants, Relation}
+import com.microsoft.hyperspace.index.Relation
 import com.microsoft.hyperspace.index.sources.{FileBasedRelation, FileBasedRelationMetadata, FileBasedSourceProvider, SourceProvider, SourceProviderBuilder}
 
 object DeltaLakeConstants {
@@ -42,26 +40,29 @@ class DeltaLakeFileBasedSource(private val spark: SparkSession) extends FileBase
   /**
    * Returns true if the given logical plan is a relation for Delta Lake.
    *
+   * Supports both V1 LogicalRelation and V2 DataSourceV2(Scan)Relation
+   * patterns across Spark versions.
+   *
    * @param plan Logical plan to check if it's supported.
    * @return Some(true) if the given plan is a supported relation, otherwise None.
    */
-  def isSupportedRelation(plan: LogicalPlan): Option[Boolean] =
-    plan match {
-      case LogicalRelation(HadoopFsRelation(_: TahoeLogFileIndex, _, _, _, _, _), _, _, _) =>
-        Some(true)
-      case _ => None
-    }
+  def isSupportedRelation(plan: LogicalPlan): Option[Boolean] = {
+    Some(DeltaLakeShims.isDeltaRelation(plan)).filter(_ == true)
+  }
 
   /**
    * Returns the [[FileBasedRelation]] that wraps the given logical plan if the given
    * logical plan is a supported relation.
+   *
+   * Supports both V1 LogicalRelation and V2 DataSourceV2(Scan)Relation patterns.
    *
    * @param plan Logical plan to wrap to [[FileBasedRelation]]
    * @return [[FileBasedRelation]] that wraps the given logical plan.
    */
   def getRelation(plan: LogicalPlan): Option[FileBasedRelation] = {
     if (isSupportedRelation(plan).contains(true)) {
-      Some(new DeltaLakeRelation(spark, plan.asInstanceOf[LogicalRelation]))
+      val v1Plan = DeltaLakeShims.toLogicalRelation(plan)
+      Some(new DeltaLakeRelation(spark, v1Plan))
     } else {
       None
     }
