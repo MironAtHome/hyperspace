@@ -25,6 +25,7 @@ import org.apache.spark.sql.sources.DataSourceRegister
 
 import com.microsoft.hyperspace.index.Relation
 import com.microsoft.hyperspace.index.sources.{FileBasedRelation, FileBasedRelationMetadata, FileBasedSourceProvider, SourceProvider, SourceProviderBuilder}
+import com.microsoft.hyperspace.index.sources.delta.DeltaLakeShims
 import com.microsoft.hyperspace.util.{CacheWithTransform, HyperspaceConf}
 
 /**
@@ -73,16 +74,18 @@ class DefaultFileBasedSource(private val spark: SparkSession) extends FileBasedS
    * @param plan Logical plan to check if it's supported.
    * @return Some(true) if the given plan is a supported relation, otherwise None.
    */
-  def isSupportedRelation(plan: LogicalPlan): Option[Boolean] =
-    plan match {
-      case LogicalRelation(
-            HadoopFsRelation(_: PartitioningAwareFileIndex, _, _, _, fileFormat, _),
-            _,
-            _,
-            _) if isSupportedFileFormat(fileFormat) =>
-        Some(true)
-      case _ => None
-    }
+  def isSupportedRelation(plan: LogicalPlan): Option[Boolean] = {
+    val isSupported: Option[Boolean] =
+      Some(DeltaLakeShims.isDeltaRelation(plan)).filter(_ == true)
+    // scalastyle:off println
+    println("#debug4: spark3_5.DefaultFileBasedSource.isSupportedRelation checking relation: "
+      + plan.toString
+      + " of type : "
+      + plan.getClass.getName
+      + s" with result = ${isSupported}")
+    // scalastyle:on println
+    isSupported
+  }
 
   /**
    * Returns the [[FileBasedRelation]] that wraps the given logical plan if the given

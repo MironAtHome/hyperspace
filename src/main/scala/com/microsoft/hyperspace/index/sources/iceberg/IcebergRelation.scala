@@ -181,7 +181,7 @@ class IcebergRelation(
       spark,
       rootPaths,
       partitionBasePath
-        .map(PartitioningAwareFileIndex.BASE_PATH_PARAM -> _)
+        .map(FileIndexOptions.BASE_PATH_PARAM -> _)
         .toMap,
       Some(schema),
       FileStatusCache.getOrCreate(spark))

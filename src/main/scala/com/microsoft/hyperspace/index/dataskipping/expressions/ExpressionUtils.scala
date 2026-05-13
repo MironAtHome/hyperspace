@@ -213,5 +213,10 @@ object ExpressionUtils {
   private case class PredicateWrapper(override val child: Expression)
       extends UnaryExpression
       with Unevaluable
-      with Predicate
+      with Predicate {
+
+    override protected def withNewChildInternal(newChild: Expression): Expression = {
+      copy(child = newChild)
+    }
+  }
 }

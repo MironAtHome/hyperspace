@@ -16,7 +16,7 @@
 
 package com.microsoft.hyperspace.index.dataskipping.expressions
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
 
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.Expression
@@ -48,9 +48,11 @@ private[dataskipping] case class BloomFilterAgg(
   }
 
   override def update(buffer: BloomFilter, input: InternalRow): BloomFilter = {
-    val value = child.eval(input)
-    if (value != null) {
-      BloomFilterUtils.put(buffer, value, child.dataType)
+    if (!input.isNullAt(0)) {
+      val value = child.eval(input)
+      if (value != null) {
+        BloomFilterUtils.put(buffer, value, child.dataType)
+      }
     }
     buffer
   }
@@ -60,24 +62,38 @@ private[dataskipping] case class BloomFilterAgg(
     buffer
   }
 
-  override def eval(buffer: BloomFilter): Any = bloomFilterEncoder.encode(buffer)
+  override def eval(buffer: BloomFilter): Any = {
+    bloomFilterEncoder.encode(buffer)
+  }
 
   override def serialize(buffer: BloomFilter): Array[Byte] = {
     val out = new ByteArrayOutputStream()
-    buffer.writeTo(out)
+    val objectOutputStream = new ObjectOutputStream(out)
+    objectOutputStream.writeObject(buffer)
+    objectOutputStream.flush()
+    objectOutputStream.close()
     out.toByteArray
   }
 
   override def deserialize(bytes: Array[Byte]): BloomFilter = {
     val in = new ByteArrayInputStream(bytes)
-    BloomFilter.readFrom(in)
+    val objectInputStream = new ObjectInputStream(in)
+    val objectIn = objectInputStream.readObject().asInstanceOf[BloomFilter]
+    objectInputStream.close()
+    objectIn
   }
 
-  override def withNewMutableAggBufferOffset(newOffset: Int): BloomFilterAgg =
+  override def withNewMutableAggBufferOffset(newOffset: Int): BloomFilterAgg = {
     copy(mutableAggBufferOffset = newOffset)
+  }
 
-  override def withNewInputAggBufferOffset(newOffset: Int): BloomFilterAgg =
+  override def withNewInputAggBufferOffset(newOffset: Int): BloomFilterAgg = {
     copy(inputAggBufferOffset = newOffset)
+  }
+
+  override def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): BloomFilterAgg = {
+    copy(child = newChildren.head)
+  }
 
   private def bloomFilterEncoder = BloomFilterEncoderProvider.defaultEncoder
 }

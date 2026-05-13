@@ -82,4 +82,8 @@ private[dataskipping] case class BloomFilterMightContainAny(
         $resultCode""",
       isNull = FalseLiteral)
   }
+
+  override protected def withNewChildInternal(newChild: Expression): Expression = {
+    copy(child = newChild)
+  }
 }

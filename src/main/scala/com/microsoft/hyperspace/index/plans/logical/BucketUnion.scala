@@ -65,4 +65,8 @@ private[hyperspace] case class BucketUnion(children: Seq[LogicalPlan], bucketSpe
             })
     children.length > 1 && childrenResolved && allChildrenCompatible
   }
+
+  override def withNewChildrenInternal(newChildren: IndexedSeq[LogicalPlan]): LogicalPlan = {
+    copy(children = newChildren)
+  }
 }

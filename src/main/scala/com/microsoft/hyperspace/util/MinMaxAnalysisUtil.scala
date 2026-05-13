@@ -20,10 +20,12 @@ import scala.collection.mutable
 
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
+import org.apache.spark.sql.catalyst.analysis.{TypeCheckResult, UnresolvedAttribute}
+import org.apache.spark.sql.catalyst.types.{PhysicalDataType, PhysicalNumericType}
 import org.apache.spark.sql.catalyst.util.TypeUtils
+import org.apache.spark.sql.errors.{QueryCompilationErrors, QueryErrorsBase}
 import org.apache.spark.sql.functions.{col, input_file_name, max, min}
-import org.apache.spark.sql.types.{StructField, StructType}
+import org.apache.spark.sql.types.{DataType, NumericType, StructField, StructType}
 
 import com.microsoft.hyperspace.HyperspaceException
 
@@ -552,7 +554,7 @@ trait MinMaxAnalysisHelper {
       colNames: Seq[String]): (Seq[StructField], Seq[StructField]) = {
     val fields = colNames.map(col => extractStructField(spark, col, schema))
     fields.partition { t =>
-      TypeUtils.checkForNumericExpr(t.dataType, "minMaxAnalysis").isSuccess
+      checkForNumericType(t.dataType, t.name).isSuccess
     }
   }
 
@@ -609,6 +611,26 @@ trait MinMaxAnalysisHelper {
         fileName -> res.toMap
       }.toMap
     }
+  }
+
+  /*
+  * This method is an extract from Spark 3.5 due to
+  * cumbersom type conversion to present to Spark's own
+  * function argument of type "Expression". I will see
+  * if I can learn this one better, but for the
+  * moment I will take the copy and modify it to
+  * suite the needs of Hyperspace
+  * */
+  def checkForNumericType(dt: DataType, fieldName: String): TypeCheckResult = dt match {
+    case dt if dt.isInstanceOf[NumericType] => TypeCheckResult.TypeCheckSuccess
+    case other =>
+      TypeCheckResult.DataTypeMismatch(
+        errorSubClass = "UNEXPECTED_INPUT_TYPE",
+        messageParameters = Map(
+          "paramIndex" -> "1",
+          "requiredType" -> "NumericType",
+          "fieldName" -> fieldName,
+          "inputType" -> other.getClass.getSimpleName.stripSuffix("$")))
   }
 }
 

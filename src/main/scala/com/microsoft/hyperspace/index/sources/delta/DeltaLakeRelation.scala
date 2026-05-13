@@ -40,7 +40,7 @@ class DeltaLakeRelation(spark: SparkSession, override val plan: LogicalRelation)
   override def signature: String =
     plan.relation match {
       case HadoopFsRelation(location: TahoeLogFileIndex, _, _, _, _, _) =>
-        location.tableVersion + location.path.toString
+        location.version + location.path.toString
     }
 
   /**
@@ -96,7 +96,7 @@ class DeltaLakeRelation(spark: SparkSession, override val plan: LogicalRelation)
         // "path" key in options can incur multiple data read unexpectedly and keep
         // the table version info as metadata.
         val opts = caseSensitiveOptions - "path" +
-          ("versionAsOf" -> location.tableVersion.toString) ++ basePathOpt
+          ("versionAsOf" -> location.version.toString) ++ basePathOpt
 
         Relation(
           Seq(
@@ -210,7 +210,7 @@ class DeltaLakeRelation(spark: SparkSession, override val plan: LogicalRelation)
       case HadoopFsRelation(location: TahoeLogFileIndex, _, _, _, _, _) =>
         // Find the largest index version whose delta table version is equal or less than
         // the given relation.
-        val equalOrLessThanLastIndex = versions.lastIndexWhere(location.tableVersion >= _._2)
+        val equalOrLessThanLastIndex = versions.lastIndexWhere(location.version >= _._2)
         if (equalOrLessThanLastIndex == versions.size - 1) {
           // The given table version is equal or larger than the latest index's.
           // Use the latest version.
@@ -219,7 +219,7 @@ class DeltaLakeRelation(spark: SparkSession, override val plan: LogicalRelation)
           // The given table version is smaller than the version at index creation.
           // Use the initial version.
           getIndexLogEntry(versions.head._1)
-        } else if (versions(equalOrLessThanLastIndex)._2 == location.tableVersion) {
+        } else if (versions(equalOrLessThanLastIndex)._2 == location.version) {
           // There is the index version that built for the given table version.
           // Use the exact version.
           getIndexLogEntry(versions(equalOrLessThanLastIndex)._1)

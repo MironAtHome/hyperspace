@@ -97,6 +97,12 @@ private[dataskipping] case class SortedArrayLowerBound(left: Expression, right: 
       $resultCode""")
   }
 
+  override protected def withNewChildrenInternal(
+      newLeft: Expression,
+      newRight: Expression): Expression = {
+    copy(left = newLeft, right = newRight)
+  }
+
   @transient private lazy val ordering: Ordering[Any] =
     TypeUtils.getInterpretedOrdering(right.dataType)
 }

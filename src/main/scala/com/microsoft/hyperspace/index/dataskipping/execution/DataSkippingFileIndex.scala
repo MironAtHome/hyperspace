@@ -44,7 +44,7 @@ class DataSkippingFileIndex(
     import sparkSession.implicits._
     val pathCol = "__path"
     val filesWithId = partitions
-      .flatMap(_.files.map(f => (f.getPath.toString, fileIdTracker.addFile(f))))
+      .flatMap(_.files.map(f => (f.getPath.toString, fileIdTracker.addFile(f.fileStatus))))
       .toDF(pathCol, IndexConstants.DATA_FILE_NAME_ID)
     val selectedFiles = filesWithId
       .hint("broadcast")
