@@ -103,6 +103,7 @@ private[hyperspace] class BucketUnionRDDPartition(
  */
 private[hyperspace] case class BucketUnionExec(children: Seq[SparkPlan], bucketSpec: BucketSpec)
     extends SparkPlan {
+
   override protected def doExecute(): RDD[InternalRow] = {
     new BucketUnionRDD[InternalRow](sparkContext, children.map(_.execute()), bucketSpec)
   }

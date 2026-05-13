@@ -16,14 +16,24 @@
 
 package com.microsoft
 
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import com.microsoft.hyperspace.HyperspaceSparkSessionExtension
+import com.microsoft.hyperspace.index.IndexConfigTrait
 import com.microsoft.hyperspace.index.execution.BucketUnionStrategy
 import com.microsoft.hyperspace.index.rules.ApplyHyperspace
 import com.microsoft.hyperspace.util.HyperspaceConf
 
 package object hyperspace {
+
+  /**
+   * Convenience API to create an index without explicitly instantiating [[Hyperspace]].
+   *
+   * This keeps backward compatibility for callers using `hyperspace.createIndex(...)`.
+   */
+  def createIndex(df: DataFrame, indexConfig: IndexConfigTrait): Unit = {
+    new Hyperspace(df.sparkSession).createIndex(df, indexConfig)
+  }
 
   /**
    * Hyperspace-specific implicit class on SparkSession.
