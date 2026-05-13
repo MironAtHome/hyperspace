@@ -17,12 +17,10 @@
 package com.microsoft.hyperspace.index.sources.default
 
 import java.util.Locale
-
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.datasources._
 import org.apache.spark.sql.sources.DataSourceRegister
-
 import com.microsoft.hyperspace.index.Relation
 import com.microsoft.hyperspace.index.sources.{FileBasedRelation, FileBasedRelationMetadata, FileBasedSourceProvider, SourceProvider, SourceProviderBuilder}
 import com.microsoft.hyperspace.util.{CacheWithTransform, HyperspaceConf}

@@ -48,9 +48,21 @@ class CreateAction(
   final override val finalState: String = ACTIVE
 
   final override def validate(): Unit = {
+    // scalastyle:off println
+    println("#debug1 CreateAction validating relation: "
+      + df.queryExecution.optimizedPlan.toString)
+    // scalastyle:on println
     // We currently only support createIndex() over HDFS file based scan nodes.
     val provider = Hyperspace.getContext(spark).sourceProviderManager
-    if (!provider.isSupportedRelation(df.queryExecution.optimizedPlan)) {
+    // scalastyle:off println
+    println("#debug2 CreateAction validating relation, provider: "
+      + provider.getClass.getName)
+    // scalastyle:on println
+    val isSupported: Boolean = provider.isSupportedRelation(df.queryExecution.optimizedPlan)
+    // scalastyle:off println
+    println(s"#debug5 result of CreateAction.validate : ${isSupported}")
+    // scalastyle:on println
+    if (!isSupported) {
       throw HyperspaceException(
         "Only creating index over HDFS file based scan nodes is supported. " +
           s"Source plan: ${df.queryExecution.sparkPlan}")

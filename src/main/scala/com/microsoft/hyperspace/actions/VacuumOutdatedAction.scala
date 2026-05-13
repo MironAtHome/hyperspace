@@ -21,7 +21,6 @@ import org.apache.hadoop.fs.Path
 import com.microsoft.hyperspace.{Hyperspace, HyperspaceException}
 import com.microsoft.hyperspace.actions.Constants.States.{ACTIVE, VACUUMINGOUTDATED}
 import com.microsoft.hyperspace.index.{IndexConstants, IndexDataManager, IndexLogEntry, IndexLogManager, LogEntry}
-import com.microsoft.hyperspace.index.sources.delta.DeltaLakeRelationMetadata
 import com.microsoft.hyperspace.telemetry.{AppInfo, HyperspaceEvent, VacuumOutdatedActionEvent}
 import com.microsoft.hyperspace.util.FileUtils
 
@@ -53,18 +52,11 @@ class VacuumOutdatedAction(
           .sourceProviderManager
           .getRelationMetadata(relations.head)
 
-        val updatedDerivedDataset = relationMetadata match {
-          case deltaLakeRelationMetadata: DeltaLakeRelationMetadata =>
-            // Reset Delta Lake version mapping.
-            val resetProperty = deltaLakeRelationMetadata.resetDeltaVersionHistory(
-              previousIndexLogEntry.derivedDataset.properties)
-
-            val newProperty = deltaLakeRelationMetadata.enrichIndexProperties(
-              resetProperty + (IndexConstants.INDEX_LOG_VERSION -> endId.toString))
-
-            previousIndexLogEntry.derivedDataset.withNewProperties(newProperty)
-          case _ => previousIndexLogEntry.derivedDataset
-        }
+         val updatedDerivedDataset = relationMetadata match {
+           case _ =>
+             // Use default behavior for all relation types
+             previousIndexLogEntry.derivedDataset
+         }
         previousIndexLogEntry.copy(derivedDataset = updatedDerivedDataset)
 
       case _ => previousIndexLogEntry

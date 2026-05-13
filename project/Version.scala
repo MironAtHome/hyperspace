@@ -25,3 +25,4 @@ case class Version(major: Int, minor: Int, patch: Int) extends Ordered[Version] 
     (major, minor, patch) compare (that.major, that.minor, that.patch)
   }
 }
+
